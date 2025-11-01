@@ -27,5 +27,4 @@ jobs:
         run: mlflow --version
 
       - name: Run MLflow project
-        shell: bash -l {0}
-        run: mlflow run MLProject/ --experiment-name "CI_Training"
+        run: mlflow run MLProject/ --experiment-name "CI_Training" --env-manager=local
