@@ -28,7 +28,10 @@ with mlflow.start_run(run_name="basic_model_california"):
     model = LinearRegression()
     model.fit(X_train, y_train)
 
-    mlflow.sklearn.save_model(model, "MLProject/model")
+    model_path = os.path.join("MLProject", f"model_{run.info.run_id}")
+    os.makedirs(model_path, exist_ok=True)
+
+    mlflow.sklearn.save_model(model, model_path)
 
     with open("run_id.txt", "w") as f:
         f.write(run.info.run_id)
