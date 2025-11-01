@@ -28,9 +28,3 @@ jobs:
 
       - name: Run MLflow project
         run: mlflow run MLProject/ --experiment-name "CI_Training" --env-manager=local
-
-      - name: Upload trained model.
-        uses: actions/upload-artifact@v3
-        with:
-          name: trained_model
-          path: MLProject/model
