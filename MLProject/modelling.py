@@ -24,7 +24,7 @@ y = df[target_col]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=args.test_size, random_state=42)
 
-with mlflow.start_run(run_name="basic_model_california"):
+with mlflow.start_run(run_name="basic_model_california") as run:
     model = LinearRegression()
     model.fit(X_train, y_train)
 
