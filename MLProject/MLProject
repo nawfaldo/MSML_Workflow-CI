@@ -1,9 +1,8 @@
-name: linear_regression_project
+name: MLProject
 
 conda_env: conda.yaml
-
 entry_points:
   main:
     parameters:
       test_size: {type: float, default: 0.2}
-    command: python modelling.py --test_size {test_size}
+    command: "python modelling.py --test_size {test_size}"
