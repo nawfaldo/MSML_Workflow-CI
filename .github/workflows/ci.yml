@@ -23,4 +23,4 @@ jobs:
           pip install mlflow pandas scikit-learn
 
       - name: Run MLflow project
-        run: mlflow run MLProject/ --experiment-name "CI_Training"
+        run: mlflow run MLProject/ --experiment-name "CI_Training" --no-conda
