@@ -40,10 +40,14 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Read run_id
+        id: get_run_id
+        run: echo "RUN_ID=$(cat MLProject/run_id.txt)" >> $GITHUB_ENV
 
       - name: Build Docker image from trained MLflow model
         run: |
-          mlflow models build-docker -m "runs:/<run_id>/model" -n nawfaldo/mlflow-ci:latest --enable-mlserver
+          mlflow models build-docker -m "runs:/${RUN_ID}/model" -n nawfaldo/mlflow-ci:latest --enable-mlserver
         
       - name: Push Docker image
         run: docker push nawfaldo/mlflow-ci:latest
