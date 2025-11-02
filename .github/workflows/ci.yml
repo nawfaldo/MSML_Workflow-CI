@@ -60,7 +60,7 @@ jobs:
           DOCKER_DIR="mlflow_docker_ctx"
           rm -rf "$DOCKER_DIR"
           mkdir -p "$DOCKER_DIR/model"
-          cp -r "$MODEL_URI" "$DOCKER_DIR/model"
+          cp -r "$MODEL_URI"/* "$DOCKER_DIR/model/"
           cat > "$DOCKER_DIR/Dockerfile" << 'EOF'
           FROM python:3.12-slim
           RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
