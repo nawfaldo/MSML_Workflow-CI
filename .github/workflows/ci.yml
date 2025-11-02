@@ -8,9 +8,16 @@ on:
 jobs:
   train_model:
     runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: workflow-ci-california-housing
+      DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASS: ${{ secrets.DOCKER_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Instal jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -27,10 +34,50 @@ jobs:
         run: mlflow --version
 
       - name: Run MLflow project
-        run: mlflow run MLProject/ --experiment-name "CI_Training" --env-manager=local
+        id: train
+        run: |
+          mlflow run MLProject/ --experiment-name "CI_Training" --env-manager=local
+          
+          # Dapatkan RUN_ID dari run terbaru
+          RUN_ID=$(mlflow search runs \
+            --experiment-name "CI_Training" \
+            --order-by "start_time DESC" \
+            --max-results 1 \
+            --output-format json | jq -r '.[0].info.run_id')
+          
+          # Simpan RUN_ID sebagai variabel lingkungan untuk langkah Docker
+          echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
+          echo "Model dilatih dengan Run ID: $RUN_ID"
 
       - name: Upload trained model
         uses: actions/upload-artifact@v4
         with:
           name: trained_model
-          path: MLProject
+          path: MLProject/
+
+      - name: Login to Docker Hub
+        if: env.MLFLOW_RUN_ID != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USER }}
+          password: ${{ env.DOCKER_PASS }}
+
+      - name: Build Docker Image using mlflow build-docker
+        if: env.MLFLOW_RUN_ID != ''
+        run: |
+          IMAGE_TAG="${{ env.DOCKER_USER }}/${{ env.IMAGE_NAME }}"
+          mlflow build-docker \
+            --model-uri "runs:/${{ env.MLFLOW_RUN_ID }}/model" \
+            --name "$IMAGE_TAG" \
+            --enable-mlserver
+
+      - name: Push Docker Image to Docker Hub
+        if: env.MLFLOW_RUN_ID != ''
+        run: |
+          IMAGE_TAG="${{ env.DOCKER_USER }}/${{ env.IMAGE_NAME }}"
+          docker push "$IMAGE_TAG:latest"
+          # Tambahkan tag commit SHA untuk versi
+          docker tag "$IMAGE_TAG:latest" "$IMAGE_TAG:${{ github.sha }}"
+          docker push "$IMAGE_TAG:${{ github.sha }}"
+          
+          echo "Image Docker $IMAGE_TAG berhasil didorong ke Docker Hub."
