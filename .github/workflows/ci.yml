@@ -24,9 +24,7 @@ jobs:
           python -m pip install pandas scikit-learn
 
       - name: Run MLflow project
-        run: |
-          export MLFLOW_TRACKING_URI=$(pwd)/mlruns
-          mlflow run MLProject/ --experiment-name "CI_Training" --env-manager=local
+        run: mlflow run MLProject/ --experiment-name "CI_Training" --env-manager=local
 
       - name: Upload MLflow run artefacts
         uses: actions/upload-artifact@v4
@@ -34,31 +32,26 @@ jobs:
           name: trained_model
           path: MLProject
 
-      - name: Get RUN_ID
-        id: get_run_id
-        run: |
-          RUN_ID=$(cat MLProject/run_id.txt)
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-
       - name: Build and Push Docker Image
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          RUN_ID: ${{ env.RUN_ID }}
         run: |
+          export PYTHONNOUSERSITE=1
+          
           echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          
+          LATEST_RUN_ID=$(ls -t mlruns/0 | head -n 1)
+          
+          MODEL_URI="mlruns/0/$LATEST_RUN_ID/artifacts/model"
+          IMAGE_NAME="$DOCKERHUB_USERNAME/california-housing"
 
-          MODEL_URI="mlruns/0/${RUN_ID}/artifacts/model"
-          IMAGE_NAME="$DOCKERHUB_USERNAME/mlflow-ci"
-
-          echo "Model URI: $MODEL_URI"
-          echo "Docker Image: $IMAGE_NAME"
+          conda run -n idk-env pip install --upgrade "protobuf<4" "googleapis-common-protos<2"
 
           DOCKER_DIR="mlflow_docker_ctx"
           rm -rf "$DOCKER_DIR"
           mkdir -p "$DOCKER_DIR/model"
           cp -r "$MODEL_URI" "$DOCKER_DIR/model"
-
           cat > "$DOCKER_DIR/Dockerfile" << 'EOF'
           FROM python:3.12-slim
           RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
@@ -76,10 +69,9 @@ jobs:
           EOF
 
           docker build -t "$IMAGE_NAME:latest" "$DOCKER_DIR"
+          
           docker push "$IMAGE_NAME:latest"
-
+          
           GIT_SHA=$(git rev-parse --short HEAD)
           docker tag "$IMAGE_NAME:latest" "$IMAGE_NAME:$GIT_SHA"
           docker push "$IMAGE_NAME:$GIT_SHA"
-
-          echo "Docker image berhasil di-push ke Docker Hub."
