@@ -24,16 +24,8 @@ y = df[target_col]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=args.test_size, random_state=42)
 
-with mlflow.start_run(run_name="basic_model_california") as run:
+with mlflow.start_run(run_name="basic_model_california"):
     model = LinearRegression()
     model.fit(X_train, y_train)
-
-    model_path = os.path.join("MLProject", f"model_{run.info.run_id}")
-    os.makedirs(model_path, exist_ok=True)
-
-    mlflow.sklearn.save_model(model, model_path)
-
-    with open("run_id.txt", "w") as f:
-        f.write(run.info.run_id)
 
 print("Training selesai")
