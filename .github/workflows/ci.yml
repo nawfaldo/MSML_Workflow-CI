@@ -38,14 +38,19 @@ jobs:
         run: |
           mlflow run MLProject/ --experiment-name "CI_Training" --env-manager=local
           
-          # Dapatkan RUN_ID dari run terbaru
           RUN_ID=$(mlflow search runs \
             --experiment-name "CI_Training" \
             --order-by "start_time DESC" \
             --max-results 1 \
             --output-format json | jq -r '.[0].info.run_id')
-          
-          # Simpan RUN_ID sebagai variabel lingkungan untuk langkah Docker
+
+
+          echo "DEBUG: Nilai RUN_ID yang diekstrak adalah: $RUN_ID"
+
+          if [ -z "$RUN_ID" ]; then
+            echo "ERROR: RUN_ID kosong. Langkah Docker akan di-skip."
+          fi
+
           echo "MLFLOW_RUN_ID=$RUN_ID" >> $GITHUB_ENV
           echo "Model dilatih dengan Run ID: $RUN_ID"
 
