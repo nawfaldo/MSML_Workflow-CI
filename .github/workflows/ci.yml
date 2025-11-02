@@ -30,10 +30,10 @@ jobs:
           python-version: "3.12"
           
       - name: Install dependencies
-        run: conda env create -f MLProject/conda.yml --name idk-env
+        run: conda env create -f MLProject/conda.yaml --name idk-env
 
       - name: Run MLflow project
-        run: mlflow run MLProject/ --experiment-name "CI_Training" --env-manager=local
+        run: conda run -n idk-env mlflow run MLProject --env-manager=local
 
       - name: Upload MLflow run artefacts
         uses: actions/upload-artifact@v4
