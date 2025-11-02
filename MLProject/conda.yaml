@@ -5,6 +5,8 @@ dependencies:
   - python=3.10
   - pip
   - pip:
-      - mlflow
-      - pandas
-      - scikit-learn
+    - mlflow==2.16.1
+    - pandas==2.2.0
+    - scikit-learn==1.4.0
+    - protobuf<4
+    - googleapis-common-protos<2
